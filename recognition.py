@@ -5,20 +5,23 @@ import speech_recognition as sr
 
 class SpeechToText:
     """Speech to text conversion using the speech_recoginition package."""
-    def __init__(self, cli_word_max: int = 35, audio_error_max: int = 5):
+    def __init__(self, device: int, cli_word_max: int = 25):
+        self.device = device
         self.cli_word_max = cli_word_max
-        self.audio_error_max = audio_error_max
 
         self.word_counter = 0
         self.audio_deque = deque([])
-        self.mircrophone_main = sr.Microphone(device_index=1)
+        self.mircrophone_main = sr.Microphone(sample_rate=16000, device_index=self.device)
 
         # Main recognizer to detect live speech
         self.recognizer_main = sr.Recognizer()
+        self.recognizer_main.energy_threshold = 300
+        self.recognizer_main.pause_threshold = 0.8
+        self.recognizer_main.dynamic_energy_threshold = False
 
         with self.mircrophone_main as source:
-            self.recognizer_main.adjust_for_ambient_noise(source)
-        self.recognizer_main.listen_in_background(self.mircrophone_main, self._audio_callback)
+            self.recognizer_main.adjust_for_ambient_noise(source, duration=1)
+        self.recognizer_main.listen_in_background(self.mircrophone_main, self._audio_callback, phrase_time_limit=2)
 
     def _audio_callback(self, _, audio: sr.AudioData) -> None:
         """Callback function that will be called when speech is detected. Instead of outputting to console
@@ -27,18 +30,8 @@ class SpeechToText:
 
     def process_audio(self) -> str:
         """Access audio element in deque and remove and generate translation."""
-        text = ''
-        audio = self.audio_deque.popleft()
-
-        retry_counter = 0
-        while True:
-            try:
-                text = self.recognizer_main.recognize_google(audio_data=audio)
-                break
-            except (sr.UnknownValueError, sr.RequestError):
-                retry_counter += 1
-                if retry_counter > self.audio_error_max:
-                    return text
+        audio_data = self.audio_deque.popleft()
+        text = self.recognizer_main.recognize_whisper(audio_data=audio_data, language='english')
         return text
 
     @staticmethod
@@ -72,5 +65,5 @@ class SpeechToText:
 if __name__ == "__main__":
 
     # Instance of speech to text class
-    speech_to_text = SpeechToText()
+    speech_to_text = SpeechToText(device=1)
     speech_to_text.audio_to_text()
