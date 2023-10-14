@@ -1,12 +1,21 @@
 import os
 import openai
+from typing import Optional, List
 
-from src.models.models import OpenAIModels
+from src.models.models import (
+    OpenAIInstructions,
+    OpenAIModels)
 
 if not os.environ.get("OPENAI_API_KEY"):
     
     # The API key is blank or not set
     raise ValueError("OPENAI_API_KEY is not set or is blank")
+
+def generate_message_prompt(prompt: str, instruction: Optional[OpenAIInstructions] = None) -> List[dict]:
+    messages = [{"role": "user", "content": prompt}]
+    if instruction is not None:
+        messages = [instruction.value] + messages
+    return messages
 
 class OpenAILLM:
     """Class for OpenAI LLM."""

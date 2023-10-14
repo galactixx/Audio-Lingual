@@ -42,7 +42,7 @@ class SpeechToText:
     def convert_audio(self) -> None:
         """Continually check audio_deque to see if there are any audio files to be converted to text."""
         while self.audio_deque:
-            text_from_audio = self.psrocess_audio()
+            text_from_audio = self.process_audio()
             self.results.append(text_from_audio)
 
     def generate_text(self) -> str:
