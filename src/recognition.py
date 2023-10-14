@@ -1,5 +1,4 @@
 import sys
-import time
 from collections import deque
 import speech_recognition as sr
 
@@ -60,7 +59,6 @@ class SpeechToText:
             # flush output
             sys.stdout.flush()
             self.word_counter += 1
-            time.sleep(1)
 
 if __name__ == "__main__":
 
