@@ -1,5 +1,8 @@
 from enum import Enum
 
+class OpenAIInstructions(Enum):
+    BASIC = {"role": "system", "content": "you are a helpful friend"}
+
 class OpenAIModels(Enum):
     """All OpenAI models available through API"""
     GPT_3_5_TURBO = "gpt-3.5-turbo"
