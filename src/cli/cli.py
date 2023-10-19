@@ -13,22 +13,24 @@ class MessageCLI(BaseCLI):
         self.speaker_name = speaker_name
         self.streaming_delay = streaming_delay
 
+        self.message = Text()
+
     def refresh(self, text: str, do_speaker: bool = True):
         """"""
-        text_display = Text()
-        panel = Panel(text_display, box=MINIMAL)
-        self.live.update(panel)
-
         if do_speaker:
-            text_display.append(f'{self.speaker_name}: ', style="bold")
+            self.message.append(f'{self.speaker_name}: ', style="bold")
+        
+        else:
+            self.message.append(f'\nNick: ', style="bold")
 
+        # Output text in streaming style, character by character
         for char in text:
-            text_display.append(char, style="bold")
+
+            # Add new character to the message
+            self.message.append(char, style="bold")
+            panel = Panel(self.message, box=MINIMAL)
+            self.live.update(panel)
             self.live.refresh()
 
             # Adjust the delay as needed
-            time.sleep(self.streaming_delay)
-
-if __name__ == '__main__':
-    message_box = MessageCLI(speaker_name='Grace')
-    message_box.refresh(text='This is a streaming text example.')
+            time.sleep(0.05)
