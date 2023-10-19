@@ -1,20 +1,34 @@
+import time
+
+from rich.panel import Panel
+from rich.box import MINIMAL
 from rich.text import Text
-from rich.console import Console
 
-class CLI:
-    """Class for managing everything that has to do with output to CLI."""
-    def __init__(self, char_limit: int = 100):
-        self.char_limit = char_limit
-        self.console = Console()
+from src.cli.base import BaseCLI
 
-    def cli_print(self, text: str) -> None:
-        """Managing printing to CLI using rich syntax."""
-        chunks = [text[i:i + self.char_limit] for i in range(0, len(text), self.char_limit)]
-        
-        for chunk in chunks:
-            boxed_text = Text(chunk, style="bold")
-            self.console.print(boxed_text)
+class MessageCLI(BaseCLI):
+    """"""
+    def __init__(self, speaker_name: str, streaming_delay: float = 0.02):
+        super().__init__()
+        self.speaker_name = speaker_name
+        self.streaming_delay = streaming_delay
+
+    def refresh(self, text: str, do_speaker: bool = True):
+        """"""
+        text_display = Text()
+        panel = Panel(text_display, box=MINIMAL)
+        self.live.update(panel)
+
+        if do_speaker:
+            text_display.append(f'{self.speaker_name}: ', style="bold")
+
+        for char in text:
+            text_display.append(char, style="bold")
+            self.live.refresh()
+
+            # Adjust the delay as needed
+            time.sleep(self.streaming_delay)
 
 if __name__ == '__main__':
-    cli = CLI()
-    cli.cli_print(text='This is a long text that you want to format with word wrapping.')
+    message_box = MessageCLI(speaker_name='Grace')
+    message_box.refresh(text='This is a streaming text example.')

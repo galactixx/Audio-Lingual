@@ -12,10 +12,12 @@ class AudioLingual:
                  llm_model: OpenAILLM,
                  device: int,
                  cli_word_max: int = 25,
+                 pause_threshold: float = 0.8,
                  energy_threshold: int = 300):
         self.llm_model = llm_model
         self.device = device
         self.cli_word_max = cli_word_max
+        self.pause_threshold = pause_threshold
         self.energy_threshold = energy_threshold
 
         self.word_counter = 0
@@ -25,8 +27,8 @@ class AudioLingual:
 
         # Main recognizer to detect live speech
         self.recognizer_main = sr.Recognizer()
-        self.recognizer_main.energy_threshold = 300
-        self.recognizer_main.pause_threshold = 0.8
+        self.recognizer_main.energy_threshold = self.energy_threshold
+        self.recognizer_main.pause_threshold = self.pause_threshold
         self.recognizer_main.dynamic_energy_threshold = False
 
         with self.mircrophone_main as source:
@@ -61,12 +63,19 @@ class AudioLingual:
             while self.audio_deque:
                 self._process_audio()
 
+                # Pause microphone after processing existing audio
+                self.pause_microphone()
+
+                # Generate text from audio recorded
                 generated_text = self.generate_text()
                 response = self.llm_model.get_completion(prompt=generated_text)
 
                 # Generate audio from completion using ElevenLabs
                 audio = generate(text=response, voice="Bella", model="eleven_multilingual_v2")
                 play(audio)
+
+            # Resume listening after generating and playing audio
+            self.resume_microphone()
 
     def listen_with_timeout(self, timeout: int = 5) -> None:
         """Listen for audio with timeout after a certain amount of time."""
@@ -88,7 +97,7 @@ class AudioLingual:
 
     def resume_microphone(self) -> None:
         """Resume the microphone to listen for speech."""
-        self.recognizer_main.energy_threshold = 300
+        self.recognizer_main.energy_threshold = self.energy_threshold
 
     def generate_text(self) -> str:
         """Generate combined text from converted audio."""
