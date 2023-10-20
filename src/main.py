@@ -41,7 +41,9 @@ class AudioLingual:
             self.recognizer_main.adjust_for_ambient_noise(source, duration=1)
 
         # Generate greeting
-        self.tts_model.voice_generation(text='Hello! I am here to answer any questions you have. Fire away!')
+        greeting = 'Hello! I am here to answer any questions you have. Fire away!'
+        self.tts_model.voice_generation(text=greeting)
+        self.cli_streamer.refresh(text=greeting)
 
     @staticmethod
     def microphone_devices() -> list:
@@ -119,8 +121,5 @@ class AudioLingual:
         return self.results_deque.popleft()
     
 if __name__ == '__main__':
-    audio_lingual = AudioLingual(llm_model=OpenAILLM(),
-                                 tts_model=ElevenLabs(),
-                                 cli_streamer=MessageStreamer(),
-                                 device=1)
+    audio_lingual = AudioLingual(device=1)
     audio_lingual.listen_for_audio()

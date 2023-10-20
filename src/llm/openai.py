@@ -37,7 +37,7 @@ class OpenAILLM(BaseLLM):
         """Get prompt completion from OpenAI API."""
 
         # Generate final message to be parsed by llm
-        messages = self.generate_message_prompt(prompt=prompt, instruction=self.instruction)
+        messages = self.generate_message_prompt(prompt=prompt)
 
         # Chat completion
         response = openai.ChatCompletion.create(

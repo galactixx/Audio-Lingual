@@ -22,10 +22,11 @@ class MessageStreamer(BaseStreamer):
             self.message.append(f'\n{self.speaker_name}: ', style="bold")
         
         else:
-            self.message.append(f'Person: ', style="bold")
+            self.message.append(f'\nPerson: ', style="bold")
 
         # Output text in streaming style, character by character
-        for char in text:
+        text_strip = text.strip()
+        for char in text_strip:
 
             # Add new character to the message
             self.message.append(char, style="bold")

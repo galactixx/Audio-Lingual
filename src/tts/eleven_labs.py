@@ -1,9 +1,10 @@
 from elevenlabs import generate, play
 
+from src.tts.base import BaseTTS
 from src.models.models import ElevenLabsModels
 from src.voices.voices import ElevenLabsVoices
 
-class ElevenLabs:
+class ElevenLabs(BaseTTS):
     """Base interface for Eleven Labs voice generation."""
     def __init__(self,
                  model: ElevenLabsModels = ElevenLabsModels.MULTILINGUAL_V2,
