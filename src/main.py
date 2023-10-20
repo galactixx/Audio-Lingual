@@ -4,6 +4,7 @@ from collections import deque
 import speech_recognition as sr
 from elevenlabs import generate, play
 
+from src.tts.eleven_labs import ElevenLabs
 from src.llm.openai import OpenAILLM
 from src.cli.message import MessageStreamer
 
@@ -11,12 +12,14 @@ class AudioLingual:
     """Speech to text conversion using the speech_recoginition package."""
     def __init__(self,
                  llm_model: OpenAILLM,
+                 tts_model: ElevenLabs,
                  cli_streamer: MessageStreamer,
                  device: int,
                  cli_word_max: int = 25,
                  pause_threshold: float = 0.8,
                  energy_threshold: int = 300):
         self.llm_model = llm_model
+        self.tts_model = tts_model
         self.cli_streamer = cli_streamer
         self.device = device
         self.cli_word_max = cli_word_max
@@ -36,6 +39,9 @@ class AudioLingual:
 
         with self.mircrophone_main as source:
             self.recognizer_main.adjust_for_ambient_noise(source, duration=1)
+
+        # Generate greeting
+        self.tts_model.voice_generation(text='Hello! I am here to answer any questions you have. Fire away!')
 
     @staticmethod
     def microphone_devices() -> list:
@@ -114,6 +120,7 @@ class AudioLingual:
     
 if __name__ == '__main__':
     audio_lingual = AudioLingual(llm_model=OpenAILLM(),
+                                 tts_model=ElevenLabs(),
                                  cli_streamer=MessageStreamer(),
                                  device=1)
     audio_lingual.listen_for_audio()
