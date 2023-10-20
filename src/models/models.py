@@ -12,3 +12,8 @@ class OpenAIModels(Enum):
     GPT_4 = "gpt-4"
     GPT_4_0314 = "gpt-4-0314"
     GPT_4_0613 = "gpt-4-0613"
+
+class ElevenLabsModels(Enum):
+    ENGLISH_V1 = 'eleven_english_v1'
+    MULTILINGUAL_V1 = "eleven_multilingual_v1"
+    MULTILINGUAL_V2 = "eleven_multilingual_v2"

@@ -1,7 +1,7 @@
 from rich.live import Live
 from rich.console import Console
 
-class BaseStreamer:
+class BaseStreamer(object):
     """
     Base text output in terminal.
     """

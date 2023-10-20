@@ -36,7 +36,6 @@ class AudioLingual:
 
         with self.mircrophone_main as source:
             self.recognizer_main.adjust_for_ambient_noise(source, duration=1)
-        print('Microphone is all set-up!')
 
     @staticmethod
     def microphone_devices() -> list:
