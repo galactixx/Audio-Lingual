@@ -8,7 +8,7 @@ class ElevenLabs(BaseTTS):
     """Base interface for Eleven Labs voice generation."""
     def __init__(self,
                  model: ElevenLabsModels = ElevenLabsModels.MULTILINGUAL_V2,
-                 voice: ElevenLabsVoices = ElevenLabsVoices.RACHEL):
+                 voice: ElevenLabsVoices = ElevenLabsVoices.BELLA):
         self.model = model
         self.voice = voice
 

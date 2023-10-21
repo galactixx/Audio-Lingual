@@ -1,5 +1,6 @@
-import time
+from typing import Optional
 
+from speech_recognition import WaitTimeoutError
 from collections import deque
 import speech_recognition as sr
 from elevenlabs import generate, play
@@ -37,9 +38,6 @@ class AudioLingual:
         self.recognizer_main.pause_threshold = self.pause_threshold
         self.recognizer_main.dynamic_energy_threshold = False
 
-        with self.mircrophone_main as source:
-            self.recognizer_main.adjust_for_ambient_noise(source, duration=1)
-
         # Generate greeting
         greeting = 'Hello! I am here to answer any questions you have. Fire away!'
         self.tts_model.voice_generation(text=greeting)
@@ -51,62 +49,65 @@ class AudioLingual:
         return sr.Microphone.list_microphone_names()
 
     def _audio_callback(self, audio: sr.AudioData) -> None:
-        """
-        Callback function that will be called when speech is detected. Instead of outputting to console
-        we will append to audio_deque which will store these values and which will slowly be offloaded.
-        """
+        """Callback function that will be called when speech is detected."""
         self.audio_deque.append(audio)
 
     def _process_audio(self) -> None:
         """Access audio element in deque and remove and generate translation."""
-        audio_data = self.audio_deque.popleft()
-        text = self.recognizer_main.recognize_whisper(audio_data=audio_data, language='english')
-        self.results_deque.append(text)
+        while self.audio_deque:
+            audio_data = self.audio_deque.popleft()
+            text = self.recognizer_main.recognize_whisper(audio_data=audio_data, language='english')
+            self.results_deque.append(text)
 
     def listen_for_audio(self) -> None:
         """Listen for audio in a loop."""
-        while True:
             
-            # Listen and detect audio from microphone
-            self.listen_with_timeout()
+        # Listen and detect audio from microphone
+        self.listen_with_timeout()
 
-            while self.audio_deque:
-                self._process_audio()
+        # Process any audio after listening
+        self._process_audio()
 
-                # Pause microphone after processing existing audio
-                self.pause_microphone()
+        # Pause microphone after processing existing audio
+        self.pause_microphone()
 
-                # Generate text from audio recorded
-                generated_text = self.generate_text()
+        # Generate text from audio recorded
+        generated_text = self.generate_text()
 
-                # Output text in in message streamer
-                self.cli_streamer.refresh(text=generated_text, do_speaker=False)
+        # Output text in in message streamer
+        self.cli_streamer.refresh(text=generated_text, do_speaker=False)
 
-                response = self.llm_model.get_completion(prompt=generated_text)
+        response = self.llm_model.get_completion(prompt=generated_text)
 
-                # Generate audio from completion using ElevenLabs
-                audio = generate(text=response, voice="Bella", model="eleven_multilingual_v2")
-                play(audio)
+        # Generate audio from completion using ElevenLabs
+        audio = generate(text=response, voice="Bella", model="eleven_multilingual_v2")
+        play(audio)
 
-                # Output text from chat bot response
-                self.cli_streamer.refresh(text=response)
+        # Output text from chat bot response
+        self.cli_streamer.refresh(text=response)
 
-            # Resume listening after generating and playing audio
-            self.resume_microphone()
+        # Resume listening after generating and playing audio
+        self.resume_microphone()
 
-    def listen_with_timeout(self, timeout: int = 5) -> None:
+    def listen_with_timeout(self, timeout: int = 5, phrase_time_limit: Optional[int] = None) -> None:
         """Listen for audio with timeout after a certain amount of time."""
-        start_time = time.time()
         audio = None
 
         # Use main microphone to capture any audio
-        with self.mircrophone_main as source:
-            while time.time() - start_time < timeout:
-                audio = self.recognizer_main.listen(source)
+        while True:
+            try:
+                with self.mircrophone_main as source:
+                    self.recognizer_main.adjust_for_ambient_noise(source, duration=1)
+                    audio = self.recognizer_main.listen(source,
+                                                        timeout=timeout,
+                                                        phrase_time_limit=phrase_time_limit)
 
-                # If audio is captured, exit the loop
+                # If audio is captured, callback and then exit the loop
                 if audio is not None:
                     self._audio_callback(audio=audio)
+                    break
+            except WaitTimeoutError:
+                pass
 
     def pause_microphone(self) -> None:
         """Pause the microphone to stop listening to ambient noise."""
@@ -118,8 +119,17 @@ class AudioLingual:
 
     def generate_text(self) -> str:
         """Generate combined text from converted audio."""
-        return self.results_deque.popleft()
+        text = []
+        while self.results_deque:
+            result = self.results_deque.popleft()
+            text.append(result)
+        return ' '.join(text)
     
 if __name__ == '__main__':
-    audio_lingual = AudioLingual(device=1)
-    audio_lingual.listen_for_audio()
+    audio_lingual = AudioLingual(llm_model=OpenAILLM(),
+                                 tts_model=ElevenLabs(),
+                                 cli_streamer=MessageStreamer(),
+                                 device=1)
+    
+    while True:
+        audio_lingual.listen_for_audio()
