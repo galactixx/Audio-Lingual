@@ -1,3 +1,6 @@
+class Greetings:
+    BASIC = 'Hello! I am here to answer any questions you have.'
+
 class ElevenLabsVoices:
     ADAM = 'Adam'
     ANTONI = 'Antoni'
