@@ -112,7 +112,6 @@ class AudioLingual:
 
                 # If audio is captured and not actually silence, callback and then exit the loop
                 if audio is not None:
-                    print(type(audio.frame_data))
                     if not self._is_silent(audio_data=audio.frame_data):
                         self._audio_callback(audio=audio)
                         break
