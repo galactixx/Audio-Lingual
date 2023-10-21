@@ -1,5 +1,6 @@
 from typing import Optional
 
+import numpy as np
 from speech_recognition import WaitTimeoutError
 from collections import deque
 import speech_recognition as sr
@@ -18,7 +19,8 @@ class AudioLingual:
                  device: int,
                  cli_word_max: int = 25,
                  pause_threshold: float = 0.8,
-                 energy_threshold: int = 300):
+                 energy_threshold: int = 300,
+                 silence_threshold: int = 500):
         self.llm_model = llm_model
         self.tts_model = tts_model
         self.cli_streamer = cli_streamer
@@ -26,6 +28,7 @@ class AudioLingual:
         self.cli_word_max = cli_word_max
         self.pause_threshold = pause_threshold
         self.energy_threshold = energy_threshold
+        self.silence_threshold = silence_threshold
 
         self.word_counter = 0
         self.audio_deque = deque([])
@@ -47,6 +50,11 @@ class AudioLingual:
     def microphone_devices() -> list:
         """Return all microphone devices."""
         return sr.Microphone.list_microphone_names()
+    
+    def _is_silent(self, audio_data: sr.AudioData) -> bool:
+        """Determine if audio data recieved is not valid (i.e. silence)"""
+        audio_levels = np.frombuffer(audio_data, dtype=np.int16)
+        return np.max(audio_levels) < self.silence_threshold
 
     def _audio_callback(self, audio: sr.AudioData) -> None:
         """Callback function that will be called when speech is detected."""
@@ -102,10 +110,12 @@ class AudioLingual:
                                                         timeout=timeout,
                                                         phrase_time_limit=phrase_time_limit)
 
-                # If audio is captured, callback and then exit the loop
+                # If audio is captured and not actually silence, callback and then exit the loop
                 if audio is not None:
-                    self._audio_callback(audio=audio)
-                    break
+                    print(type(audio.frame_data))
+                    if not self._is_silent(audio_data=audio.frame_data):
+                        self._audio_callback(audio=audio)
+                        break
             except WaitTimeoutError:
                 pass
 
