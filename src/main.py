@@ -1,125 +1,44 @@
-from typing import Optional
-
-from threading import Thread
-import numpy as np
-from speech_recognition import WaitTimeoutError
-from collections import deque
-import speech_recognition as sr
-
-from src.voices.voices import Greetings
 from src.tts.eleven_labs import ElevenLabs
 from src.llm.openai import OpenAILLM
 from src.cli.message import MessageStreamer
+from src.mic.mic import Microphone
+from src.voices.voices import Greetings
 
 class AudioLingual:
-    """Speech to text conversion using the speech_recoginition package."""
+    """
+    Main application that detects audio from microphone, converts to text,
+    intputs text to an LLM, takes LLM response which is then returned as a TTS response.
+    """
     def __init__(self,
+                 greeting: Greetings,
                  llm_model: OpenAILLM,
                  tts_model: ElevenLabs,
-                 cli_streamer: MessageStreamer,
-                 device: int,
-                 cli_word_max: int = 25,
-                 pause_threshold: float = 0.8,
-                 energy_threshold: int = 300,
-                 silence_threshold: int = 500):
+                 microphone: Microphone,
+                 cli_streamer: MessageStreamer):
         self.llm_model = llm_model
         self.tts_model = tts_model
+        self.microphone = microphone
         self.cli_streamer = cli_streamer
-        self.device = device
-        self.cli_word_max = cli_word_max
-        self.pause_threshold = pause_threshold
-        self.energy_threshold = energy_threshold
-        self.silence_threshold = silence_threshold
 
-        self.word_counter = 0
-        self.audio_deque = deque([])
-        self.results_deque = deque([])
-        self.mircrophone_main = sr.Microphone(sample_rate=16000, device_index=self.device)
-
-        # Main recognizer to detect live speech
-        self.recognizer_main = sr.Recognizer()
-        self.recognizer_main.energy_threshold = self.energy_threshold
-        self.recognizer_main.pause_threshold = self.pause_threshold
-        self.recognizer_main.dynamic_energy_threshold = False
-
-        # Generate greeting
-        greeting = Greetings.BASIC
-        tts_thread = Thread(target=self.tts_model.voice_generation, args=(greeting,))
-        tts_thread.start()
-        self.cli_streamer.refresh(text=greeting)
-
-    @staticmethod
-    def microphone_devices() -> list:
-        """Return all microphone devices."""
-        return sr.Microphone.list_microphone_names()
-    
-    def _is_silent(self, audio_data: sr.AudioData) -> bool:
-        """Determine if audio data recieved is not valid (i.e. silence)"""
-        audio_levels = np.frombuffer(audio_data, dtype=np.int16)
-        return np.max(audio_levels) < self.silence_threshold
-
-    def _audio_callback(self, audio: sr.AudioData) -> None:
-        """Callback function that will be called when speech is detected."""
-        self.audio_deque.append(audio)
-
-    def _process_audio(self) -> None:
-        """Access audio element in deque and remove and generate translation."""
-        while self.audio_deque:
-            audio_data = self.audio_deque.popleft()
-            text = self.recognizer_main.recognize_whisper(audio_data=audio_data, language='english')
-            self.results_deque.append(text)
-
-    def _pause_microphone(self) -> None:
-        """Pause the microphone to stop listening to ambient noise."""
-        self.recognizer_main.energy_threshold = float('inf')
-
-    def _resume_microphone(self) -> None:
-        """Resume the microphone to listen for speech."""
-        self.recognizer_main.energy_threshold = self.energy_threshold
-
-    def _generate_text(self) -> str:
-        """Generate combined text from converted audio."""
-        text = []
-        while self.results_deque:
-            result = self.results_deque.popleft()
-            text.append(result)
-        return ' '.join(text)
-    
-    def _listen_with_timeout(self, timeout: int = 5, phrase_time_limit: Optional[int] = None) -> None:
-        """Listen for audio with timeout after a certain amount of time."""
-        audio = None
-
-        # Use main microphone to capture any audio
-        while True:
-            try:
-                with self.mircrophone_main as source:
-                    self.recognizer_main.adjust_for_ambient_noise(source, duration=1)
-                    audio = self.recognizer_main.listen(source,
-                                                        timeout=timeout,
-                                                        phrase_time_limit=phrase_time_limit)
-
-                # If audio is captured and not actually silence, callback and then exit the loop
-                if audio is not None:
-                    if not self._is_silent(audio_data=audio.frame_data):
-                        self._audio_callback(audio=audio)
-                        break
-            except WaitTimeoutError:
-                pass
+        # Generate greeting and end 
+        tts_thread = self.tts_model.voice_generation(text=greeting)
+        self.cli_streamer.refresh(text=greeting, do_greeting=True)
+        tts_thread.join()
 
     def listen_for_audio(self) -> None:
         """Listen for audio in a loop."""
             
         # Listen and detect audio from microphone
-        self._listen_with_timeout()
+        self.microphone.listen_with_timeout()
 
         # Process any audio after listening
-        self._process_audio()
+        self.microphone.process_audio()
 
         # Pause microphone after processing existing audio
-        self._pause_microphone()
+        self.microphone.pause_microphone()
 
         # Generate text from audio recorded
-        generated_text = self._generate_text()
+        generated_text = self.microphone.generate_text()
 
         # Output text in in message streamer
         self.cli_streamer.refresh(text=generated_text, do_speaker=False)
@@ -128,20 +47,25 @@ class AudioLingual:
         response = self.llm_model.get_completion(prompt=generated_text)
 
         # Start a new TTS thread for the generated text
-        tts_thread = Thread(target=self.tts_model.voice_generation, args=(response,))
-        tts_thread.start()
+        tts_thread = self.tts_model.voice_generation(text=response)
 
         # Output text from chat bot response
         self.cli_streamer.refresh(text=response)
+        tts_thread.join()
 
         # Resume listening after generating and playing audio
-        self._resume_microphone()
+        self.microphone.resume_microphone()
     
 if __name__ == '__main__':
-    audio_lingual = AudioLingual(llm_model=OpenAILLM(),
+    audio_lingual = AudioLingual(greeting=Greetings.BASIC,
+                                 llm_model=OpenAILLM(),
                                  tts_model=ElevenLabs(),
-                                 cli_streamer=MessageStreamer(),
-                                 device=1)
+                                 microphone=Microphone(device=1),
+                                 cli_streamer=MessageStreamer())
     
+    # Inititalize recognizer
+    audio_lingual.microphone.set_up_recognizer()
+    
+    # Listen for audio
     while True:
         audio_lingual.listen_for_audio()
