@@ -1,9 +1,16 @@
-from elevenlabs import generate, play
+import os
+
+from elevenlabs import generate, play, RateLimitError
 from threading import Thread
 
 from src.tts.base import BaseTTS
 from src.models.models import ElevenLabsModels
 from src.voices.voices import ElevenLabsVoices
+
+if not os.environ.get("ELEVEN_API_KEY"):
+    
+    # The API key is blank or not set
+    raise ValueError("ELEVEN_API_KEY is not set or is blank")
 
 class ElevenLabs(BaseTTS):
     """Base interface for Eleven Labs voice generation."""
@@ -12,10 +19,17 @@ class ElevenLabs(BaseTTS):
                  voice: ElevenLabsVoices = ElevenLabsVoices.BELLA):
         self.model = model
         self.voice = voice
+        self.error_api_rate = False
 
     def _voice_generation_threaded(self, text: str) -> None:
         """Generates voice message based on inputted text."""
-        audio = generate(text=text, voice=self.voice, model=self.model.value)
+        try:
+            audio = generate(text=text, voice=self.voice, model=self.model.value)
+        except RateLimitError:
+            if not self.error_api_rate:
+                print("An error occurred. ElevenLabs API limit reached so no voice will be heard.")
+                self.error_api_rate = True
+            return
         
         # Play generated audio
         play(audio)
