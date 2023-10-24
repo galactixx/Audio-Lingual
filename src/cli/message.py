@@ -16,7 +16,7 @@ class MessageStreamer(BaseStreamer):
         # Message history
         self.message = Text()
 
-    def refresh(self, text: str, do_speaker: bool = True, do_greeting: bool = False):
+    def refresh(self, text: str, do_speaker: bool = True, do_greeting: bool = False) -> None:
         """"""
         if do_greeting:
             self.message.append(f'{self.speaker_name}: ', style="bold")
