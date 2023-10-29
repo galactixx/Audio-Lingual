@@ -17,3 +17,6 @@ class ElevenLabsModels(Enum):
     ENGLISH_V1 = 'eleven_english_v1'
     MULTILINGUAL_V1 = "eleven_multilingual_v1"
     MULTILINGUAL_V2 = "eleven_multilingual_v2"
+
+class CoquiModels(Enum):
+    GLOW_TTS = 'glow-tts'

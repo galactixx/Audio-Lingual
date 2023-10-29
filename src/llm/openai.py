@@ -8,11 +8,6 @@ from src.models.models import (
     OpenAIInstructions,
     OpenAIModels)
 
-if not os.environ.get("OPENAI_API_KEY"):
-    
-    # The API key is blank or not set
-    raise ValueError("OPENAI_API_KEY is not set or is blank")
-
 class OpenAILLM(BaseLLM):
     """Simple interface for OpenAI LLM."""
     def __init__(self,
@@ -22,6 +17,10 @@ class OpenAILLM(BaseLLM):
         self.model_name = model_name
         self.instruction = instruction
         self.temperature = temperature
+
+        # The API key is blank or not set
+        if not os.environ.get("OPENAI_API_KEY"):
+            raise ValueError("OPENAI_API_KEY is not set or is blank")
 
         if model_name.value not in [model.value for model in OpenAIModels]:
             raise ValueError(f'{model_name} is not a valid model name for OpenAI API')

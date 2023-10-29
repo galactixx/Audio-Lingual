@@ -7,19 +7,18 @@ from src.tts.base import BaseTTS
 from src.models.models import ElevenLabsModels
 from src.voices.voices import ElevenLabsVoices
 
-if not os.environ.get("ELEVEN_API_KEY"):
-    
-    # The API key is blank or not set
-    raise ValueError("ELEVEN_API_KEY is not set or is blank")
-
 class ElevenLabs(BaseTTS):
-    """Base interface for Eleven Labs voice generation."""
+    """Interface for Eleven Labs voice generation."""
     def __init__(self,
                  model: ElevenLabsModels = ElevenLabsModels.MULTILINGUAL_V2,
                  voice: ElevenLabsVoices = ElevenLabsVoices.BELLA):
         self.model = model
         self.voice = voice
         self.error_api_rate = False
+
+        # The API key is blank or not set
+        if not os.environ.get("ELEVEN_API_KEY"):
+            raise ValueError("ELEVEN_API_KEY is not set or is blank")
 
     def _voice_generation_threaded(self, text: str) -> None:
         """Generates voice message based on inputted text."""
