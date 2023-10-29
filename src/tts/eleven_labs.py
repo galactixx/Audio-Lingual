@@ -4,13 +4,13 @@ from elevenlabs import generate, play, RateLimitError
 from threading import Thread
 
 from src.tts.base import BaseTTS
-from src.models.models import ElevenLabsModels
+from src.models.models import TTSModels
 from src.voices.voices import ElevenLabsVoices
 
 class ElevenLabs(BaseTTS):
     """Interface for Eleven Labs voice generation."""
     def __init__(self,
-                 model: ElevenLabsModels = ElevenLabsModels.MULTILINGUAL_V2,
+                 model: TTSModels = TTSModels.ELEVEN_LABS_MULTILINGUAL_V2,
                  voice: ElevenLabsVoices = ElevenLabsVoices.BELLA):
         self.model = model
         self.voice = voice
