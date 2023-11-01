@@ -35,8 +35,6 @@ class ElevenLabs(BaseTTS):
 
     def voice_generation(self, text: str) -> Thread:
         """Generate thread of voice generation function."""
-        
-        # Start a new TTS thread for the generated text
         tts_thread = Thread(target=self._voice_generation_threaded, args=(text,))
         tts_thread.start()
 

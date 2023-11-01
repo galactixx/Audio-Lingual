@@ -1,4 +1,5 @@
 {
     "downloaded_models_path": "./models/",
+    "coqui_model_json_filename": "models.json",
     "coqui_github_models_url": "https://github.com/coqui-ai/TTS/blob/14c80dd1fd665ea348ce83f2b34392485ac5dfa6/TTS/.models.json#L7"
 }
