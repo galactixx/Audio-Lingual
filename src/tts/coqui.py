@@ -1,7 +1,9 @@
-import pyaudio
 import json
-import torch
 from threading import Thread
+
+import numpy as np
+import pyaudio
+import torch
 from TTS.utils.manage import ModelManager
 from TTS.utils.synthesizer import Synthesizer
 
@@ -25,36 +27,34 @@ class Coqui(BaseTTS):
         self.language = language
         self.model_group = model_group
 
-        # Coqui models json path
-        model_json_path = collect_coqui_models_json_file()
-
         # Based on specified model, download model if it needs to be downloaded
-        manager = ModelManager(model_json_path, output_prefix=MODEL_DIRECTORY, progress_bar=True)
+        self.model_manager = ModelManager(collect_coqui_models_json_file(), output_prefix=MODEL_DIRECTORY, progress_bar=True)
 
         # Use the ModelManager to download a model
-        model_path, config_path, model_item = manager.download_model(
-            f'tts_models/{self.language.value}/{self.model_group.value}/{self.model.value}')
+        model_path, config_path, model_item = self._download_model()
+        vocoder_model_path, vocoder_config_path, _ = self.model_manager.download_model(model_item["default_vocoder"])
         
-        # Download the default vocoder for the TTS model
-        vocoder_model_path, vocoder_config_path, _ = manager.download_model(model_item["default_vocoder"])
+        self.synthesizer = self._initialize_synthesizer(model_path, config_path, vocoder_model_path, vocoder_config_path)
+        self.stream = self._initialize_audio_stream()
 
-        # Initialize the synthesizer
+    def _download_model(self):
+        return self.model_manager.download_model(f'tts_models/{self.language.value}/{self.model_group.value}/{self.model.value}')
+
+    def _initialize_synthesizer(self, tts_checkpoint, tts_config_path, vocoder_checkpoint, vocoder_config_path):
         use_cuda = torch.cuda.is_available()
-        self.synthesizer = Synthesizer(
-            tts_checkpoint=model_path,
-            tts_config_path=config_path,
-            vocoder_checkpoint=vocoder_model_path,
-            vocoder_config=vocoder_config_path,
-            use_cuda=use_cuda
-        )
+        return Synthesizer(tts_checkpoint=tts_checkpoint,
+                           tts_config_path=tts_config_path,
+                           vocoder_checkpoint=vocoder_checkpoint,
+                           vocoder_config=vocoder_config_path,
+                           use_cuda=use_cuda)
 
-        # Initialize PyAudio and open a stream
+    def _initialize_audio_stream(self):
         p = pyaudio.PyAudio()
-        self.stream = p.open(format=pyaudio.paInt16,
-                             channels=1,
-                             rate=16000,
-                             input=True,
-                             frames_per_buffer=1024)
+        return p.open(format=pyaudio.paInt16,
+                      channels=1,
+                      rate=16000,
+                      output=True,
+                      frames_per_buffer=1024)
 
     def _voice_generation_threaded(self, text: str) -> None:
         """Generate final voice generation based on text input."""
@@ -67,6 +67,3 @@ class Coqui(BaseTTS):
         tts_thread.start()
 
         return tts_thread
-    
-
-Coqui()

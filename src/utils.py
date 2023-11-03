@@ -14,6 +14,9 @@ def collect_coqui_models_json_file() -> str:
     """
     Automatically download models.json file from Coqui GitHub page.
     """
+    if not os.path.exists(MODEL_DIRECTORY):
+        os.makedirs(MODEL_DIRECTORY)
+
     json_model_path = os.path.join(MODEL_DIRECTORY, COQUI_MODEL_JSON_FILENAME)
     if os.path.exists(json_model_path):
         return json_model_path

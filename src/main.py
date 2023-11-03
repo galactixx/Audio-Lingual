@@ -1,3 +1,6 @@
+from typing import Union
+
+from src.tts.coqui import Coqui
 from src.tts.eleven_labs import ElevenLabs
 from src.llm.openai import OpenAILLM
 from src.cli.message import MessageStreamer
@@ -12,7 +15,7 @@ class AudioLingual:
     def __init__(self,
                  greeting: Greetings,
                  llm_model: OpenAILLM,
-                 tts_model: ElevenLabs,
+                 tts_model: Union[ElevenLabs, Coqui],
                  microphone: Microphone,
                  cli_streamer: MessageStreamer):
         self.llm_model = llm_model
@@ -59,7 +62,7 @@ class AudioLingual:
 if __name__ == '__main__':
     audio_lingual = AudioLingual(greeting=Greetings.BASIC,
                                  llm_model=OpenAILLM(),
-                                 tts_model=ElevenLabs(),
+                                 tts_model=Coqui(),
                                  microphone=Microphone(device=1),
                                  cli_streamer=MessageStreamer())
     
