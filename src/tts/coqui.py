@@ -1,9 +1,8 @@
 import json
 from threading import Thread
 
-import numpy as np
-import pyaudio
 import torch
+import sounddevice as sd
 from TTS.utils.manage import ModelManager
 from TTS.utils.synthesizer import Synthesizer
 
@@ -30,17 +29,21 @@ class Coqui(BaseTTS):
         # Based on specified model, download model if it needs to be downloaded
         self.model_manager = ModelManager(collect_coqui_models_json_file(), output_prefix=MODEL_DIRECTORY, progress_bar=True)
 
-        # Use the ModelManager to download a model
         model_path, config_path, model_item = self._download_model()
         vocoder_model_path, vocoder_config_path, _ = self.model_manager.download_model(model_item["default_vocoder"])
         
         self.synthesizer = self._initialize_synthesizer(model_path, config_path, vocoder_model_path, vocoder_config_path)
-        self.stream = self._initialize_audio_stream()
+
+    def _generate_directory_name(self) -> str:
+        """Generate model directory based on parameters."""
+        return f'tts_models/{self.language.value}/{self.model_group.value}/{self.model.value}'
 
     def _download_model(self):
-        return self.model_manager.download_model(f'tts_models/{self.language.value}/{self.model_group.value}/{self.model.value}')
+        """Download model using ModelManager."""
+        return self.model_manager.download_model(self._generate_directory_name())
 
-    def _initialize_synthesizer(self, tts_checkpoint, tts_config_path, vocoder_checkpoint, vocoder_config_path):
+    def _initialize_synthesizer(self, tts_checkpoint: str, tts_config_path: str, vocoder_checkpoint: str, vocoder_config_path: str):
+        """Initialize the synthesizer for later use."""
         use_cuda = torch.cuda.is_available()
         return Synthesizer(tts_checkpoint=tts_checkpoint,
                            tts_config_path=tts_config_path,
@@ -48,18 +51,12 @@ class Coqui(BaseTTS):
                            vocoder_config=vocoder_config_path,
                            use_cuda=use_cuda)
 
-    def _initialize_audio_stream(self):
-        p = pyaudio.PyAudio()
-        return p.open(format=pyaudio.paInt16,
-                      channels=1,
-                      rate=16000,
-                      output=True,
-                      frames_per_buffer=1024)
-
     def _voice_generation_threaded(self, text: str) -> None:
         """Generate final voice generation based on text input."""
         speech = self.synthesizer.tts(text)
-        self.stream.write(speech)
+
+        # Play the resulting speech using sounddevice
+        sd.play(speech, samplerate=23050)
 
     def voice_generation(self, text: str) -> Thread:
         """Generate thread of voice generation function."""
