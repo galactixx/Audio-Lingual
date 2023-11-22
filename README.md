@@ -1,5 +1,7 @@
 # Audio-Lingual
-Chat bot that detects any speech and responds in a voice. Input and output are also registered in the CLI. 
+A versatile chatbot capable of detecting speech in diverse environments and responding with a synthesized voice. Both input and output are logged in an intuitive CLI interface.
 
-To Do:
+
+Future ideas:
+
   - Integrate a vector database to store historical conversation archives.
