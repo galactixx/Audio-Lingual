@@ -3,9 +3,9 @@ import os
 from elevenlabs import generate, play, RateLimitError
 from threading import Thread
 
-from src.tts.base import BaseTTS
-from src.models.models import TTSModels
-from src.voices.voices import ElevenLabsVoices
+from audio_lingual.tts._base import BaseTTS
+from audio_lingual.models.models import TTSModels
+from audio_lingual.voices.voices import ElevenLabsVoices
 
 class ElevenLabs(BaseTTS):
     """Interface for Eleven Labs voice generation."""
@@ -22,6 +22,7 @@ class ElevenLabs(BaseTTS):
 
     def _voice_generation_threaded(self, text: str) -> None:
         """Generates voice message based on inputted text."""
+
         try:
             audio = generate(text=text, voice=self.voice, model=self.model.value)
         except RateLimitError:
@@ -35,6 +36,7 @@ class ElevenLabs(BaseTTS):
 
     def voice_generation(self, text: str) -> Thread:
         """Generate thread of voice generation function."""
+        
         tts_thread = Thread(target=self._voice_generation_threaded, args=(text,))
         tts_thread.start()
 

@@ -1,11 +1,11 @@
 from typing import Union
 
-from src.tts.coqui import Coqui
-from src.tts.eleven_labs import ElevenLabs
-from src.llm.openai import OpenAILLM
-from src.cli.message import MessageStreamer
-from src.mic.mic import Microphone
-from src.voices.voices import Greetings
+from audio_lingual.tts.coqui import Coqui
+from audio_lingual.tts.eleven_labs import ElevenLabs
+from audio_lingual.llm.openai import OpenAILLM
+from audio_lingual.cli.message import MessageStreamer
+from audio_lingual.mic.mic import Microphone
+from audio_lingual.voices.voices import Greetings
 
 class AudioLingual:
     """
@@ -60,11 +60,12 @@ class AudioLingual:
         self.microphone.resume_microphone()
     
 if __name__ == '__main__':
-    audio_lingual = AudioLingual(greeting=Greetings.BASIC,
-                                 llm_model=OpenAILLM(),
-                                 tts_model=Coqui(),
-                                 microphone=Microphone(device=1),
-                                 cli_streamer=MessageStreamer())
+    audio_lingual = AudioLingual(
+        greeting=Greetings.BASIC,
+        llm_model=OpenAILLM(),
+        tts_model=Coqui(),
+        microphone=Microphone(device=1),
+        cli_streamer=MessageStreamer())
     
     # Inititalize recognizer
     audio_lingual.microphone.set_up_recognizer()

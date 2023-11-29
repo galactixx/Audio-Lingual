@@ -4,7 +4,7 @@ from rich.panel import Panel
 from rich.box import MINIMAL
 from rich.text import Text
 
-from src.cli.base import BaseStreamer
+from audio_lingual.cli._base import BaseStreamer
 
 class MessageStreamer(BaseStreamer):
     """"""

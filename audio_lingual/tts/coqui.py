@@ -6,10 +6,10 @@ import sounddevice as sd
 from TTS.utils.manage import ModelManager
 from TTS.utils.synthesizer import Synthesizer
 
-from src.tts.base import BaseTTS
-from src.models.models import CoquiModelGroup, TTSModels
-from src.models.language_codes import LanguageCodes
-from src.utils import collect_coqui_models_json_file
+from audio_lingual.tts._base import BaseTTS
+from audio_lingual.models.models import CoquiModelGroup, TTSModels
+from audio_lingual.models.language_codes import LanguageCodes
+from audio_lingual.utils import collect_coqui_models_json_file
 
 with open('config.json') as config_file:
     config = json.load(config_file)
@@ -36,14 +36,17 @@ class Coqui(BaseTTS):
 
     def _generate_directory_name(self) -> str:
         """Generate model directory based on parameters."""
+        
         return f'tts_models/{self.language.value}/{self.model_group.value}/{self.model.value}'
 
     def _download_model(self):
         """Download model using ModelManager."""
+
         return self.model_manager.download_model(self._generate_directory_name())
 
     def _initialize_synthesizer(self, tts_checkpoint: str, tts_config_path: str, vocoder_checkpoint: str, vocoder_config_path: str):
         """Initialize the synthesizer for later use."""
+
         use_cuda = torch.cuda.is_available()
         return Synthesizer(tts_checkpoint=tts_checkpoint,
                            tts_config_path=tts_config_path,
@@ -53,6 +56,7 @@ class Coqui(BaseTTS):
 
     def _voice_generation_threaded(self, text: str) -> None:
         """Generate final voice generation based on text input."""
+
         speech = self.synthesizer.tts(text)
 
         # Play the resulting speech using sounddevice
@@ -60,6 +64,7 @@ class Coqui(BaseTTS):
 
     def voice_generation(self, text: str) -> Thread:
         """Generate thread of voice generation function."""
+
         tts_thread = Thread(target=self._voice_generation_threaded, args=(text,))
         tts_thread.start()
 
