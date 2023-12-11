@@ -1,7 +1,7 @@
 import os
+import json
 
 import requests
-import json
 
 with open('config.json') as config_file:
     config = json.load(config_file)
@@ -14,6 +14,7 @@ def collect_coqui_models_json_file() -> str:
     """
     Automatically download models.json file from Coqui GitHub page.
     """
+
     if not os.path.exists(MODEL_DIRECTORY):
         os.makedirs(MODEL_DIRECTORY)
 

@@ -1,7 +1,13 @@
 class Greetings:
+    """
+    Greetings to be said by chat bot when starting up.
+    """
     BASIC = 'Hello! I am here to answer any questions you have.'
 
 class ElevenLabsVoices:
+    """
+    All options for ElevenLabs voices.
+    """
     ADAM = 'Adam'
     ANTONI = 'Antoni'
     ARNOLD = 'Arnold'

@@ -3,7 +3,9 @@ from typing import List
 from abc import ABC, abstractmethod
 
 class BaseLLM(ABC):
-    """Base interface for LLM."""
+    """
+    Base interface for LLM.
+    """
     @abstractmethod
     def generate_message_prompt(self, prompt: str) -> List[dict]:
         pass

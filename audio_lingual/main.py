@@ -12,12 +12,13 @@ class AudioLingual:
     Main application that detects audio from microphone, converts to text,
     intputs text to an LLM, takes LLM response which is then returned as a TTS response.
     """
-    def __init__(self,
-                 greeting: Greetings,
-                 llm_model: OpenAILLM,
-                 tts_model: Union[ElevenLabs, Coqui],
-                 microphone: Microphone,
-                 cli_streamer: MessageStreamer):
+    def __init__(
+        self,
+        greeting: Greetings,
+        llm_model: OpenAILLM,
+        tts_model: Union[ElevenLabs, Coqui],
+        microphone: Microphone,
+        cli_streamer: MessageStreamer):
         self.llm_model = llm_model
         self.tts_model = tts_model
         self.microphone = microphone
@@ -29,7 +30,9 @@ class AudioLingual:
         tts_thread.join()
 
     def listen_for_audio(self) -> None:
-        """Listen for audio in a loop."""
+        """
+        Listen for audio in a loop.
+        """
             
         # Listen and detect audio from microphone
         self.microphone.listen_with_timeout()

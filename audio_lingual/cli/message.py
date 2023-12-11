@@ -7,7 +7,9 @@ from rich.text import Text
 from audio_lingual.cli._base import BaseStreamer
 
 class MessageStreamer(BaseStreamer):
-    """"""
+    """
+    CLI interface for chat from user and chatbot.
+    """
     def __init__(self, speaker_name: str = 'Audio Lingual', streaming_delay: float = 0.02):
         super().__init__()
         self.speaker_name = speaker_name
@@ -17,7 +19,10 @@ class MessageStreamer(BaseStreamer):
         self.message = Text()
 
     def refresh(self, text: str, do_speaker: bool = True, do_greeting: bool = False) -> None:
-        """"""
+        """
+        Refresh output in CLI and add new text.
+        """
+
         if do_greeting:
             self.message.append(f'{self.speaker_name}: ', style="bold")
         elif do_speaker:
